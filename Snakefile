@@ -6,33 +6,38 @@ rule all:
         t1='bids/sub-01/anat/sub-01_T1w.nii',
         dwi='bids/sub-01/dwi',
         dd='bids/dataset_description.json'
-        
-rule untar:
+
+
+rule extract_archive:
     input:
-        tar=lambda wildcards: glob('input/*.tar')[0]
+        archive=config['in_archive']
     output:
         dicom_dir=temp(directory('dicoms'))
-    shell:
-        'mkdir -p {output.dicom_dir} && '
-        "tar -xf {input.tar} --transform 's|.*/||'  -C {output.dicom_dir}"
+    script: 'scripts/extract_archive.py'
+
+#zip of dicoms = extract and flatten, next step is to_nifti 
+#zip of bids - extract as is, but will need to know what subject/session to process
 
 checkpoint to_nifti:
     input:
         dicom_dir='dicoms'
     output:
         nifti_dir=temp(directory('niftis'))
+    container:
+        'docker://brainlife/dcm2niix:v1.0.20211006'
     shell:
         'mkdir -p {output} && dcm2niix -i y -o {output}  {input} '
 
-def get_t1_nii(wildcards):
-    nifti_dir=checkpoints.to_nifti.get(**wildcards).output[0]
-    
-    #need to identify the T1w image - just glob for mprage for now
-    t1w = glob(f'{nifti_dir}/*mprage*.nii')[0]
-    return t1w
-    
-
-    
+   
+rule cp_t1w_files:
+    """this rule uses a list of possible matches to find the T1w nii"""
+    input:
+        nifti_dir='niftis'
+    output: 
+        t1='bids/sub-01/anat/sub-01_T1w.nii'
+    script:
+        'scripts/cp_t1w_file.py'
+        
 rule cp_dwi:
     input:
         nifti_dir='niftis'
@@ -50,14 +55,6 @@ rule cp_dwi:
         "  i=$((i+1)); "
         "done "
         
-rule cp_t1:
-    input:
-        get_t1_nii
-    output:
-        t1='bids/sub-01/anat/sub-01_T1w.nii'
-    shell:
-        'cp {input} {output}'
-
 rule cp_dd:
     input:
         'resources/dataset_description.json'
@@ -65,4 +62,10 @@ rule cp_dd:
         'bids/dataset_description.json'
     shell:
         'cp {input} {output}'
-    
+
+"""   
+rule run_diffparc:
+    input:
+        ' 
+
+"""
