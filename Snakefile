@@ -3,7 +3,7 @@ from glob import glob
 
 rule all:
     input:
-        t1='bids/sub-01/anat/sub-01_T1w.nii',
+        t1='bids/sub-01/anat/sub-01_T1w.nii.gz',
         dwi='bids/sub-01/dwi',
         dd='bids/dataset_description.json'
 
@@ -37,7 +37,15 @@ rule cp_t1w_files:
         t1='bids/sub-01/anat/sub-01_T1w.nii'
     script:
         'scripts/cp_t1w_file.py'
-        
+       
+rule gzip_t1:
+    input:
+        t1='bids/sub-01/anat/sub-01_T1w.nii'
+    output:
+        t1='bids/sub-01/anat/sub-01_T1w.nii.gz'
+    shell:
+        'gzip {input}'
+ 
 rule cp_dwi:
     input:
         nifti_dir='niftis'
@@ -49,12 +57,14 @@ rule cp_dwi:
         "do "
         "  prefix=${{bvec%.bvec}}; "
         "  cp -v ${{prefix}}.nii {output.dwi_dir}/sub-01_run-${{i}}_dwi.nii; "
+        "  gzip {output.dwi_dir}/sub-01_run-${{i}}_dwi.nii; "
         "  cp -v ${{prefix}}.bval {output.dwi_dir}/sub-01_run-${{i}}_dwi.bval; "
         "  cp -v ${{prefix}}.bvec {output.dwi_dir}/sub-01_run-${{i}}_dwi.bvec; "
         "  cp -v ${{prefix}}.json {output.dwi_dir}/sub-01_run-${{i}}_dwi.json; "
         "  i=$((i+1)); "
         "done "
         
+
 rule cp_dd:
     input:
         'resources/dataset_description.json'
