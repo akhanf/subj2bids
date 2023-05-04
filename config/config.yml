@@ -1,0 +1,13 @@
+in_archive: /path/to/archive
+in_model: /local/scratch/PPMI_classifier/ppmi_classifier/results/classify-pdvsctrl^all/featset-templateparc/photonai/estim-RandomForestClassifier_featsel-None_resampler-None_cv-10fold_optim-quick
+
+featsets:
+  - templateparc
+
+tabular: #this is for parsing the data in diffparc csv files
+  extract_ids:
+    column_rename:
+      subj: subj
+    patterns:
+      subject: (sub-[a-zA-Z0-9]+)
+
