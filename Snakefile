@@ -3,9 +3,7 @@ from glob import glob
 
 rule all:
     input:
-        t1='bids/sub-01/anat/sub-01_T1w.nii.gz',
-        dwi='bids/sub-01/dwi',
-        dd='bids/dataset_description.json'
+        'diffparc'
 
 
 rule extract_archive:
@@ -73,9 +71,18 @@ rule cp_dd:
     shell:
         'cp {input} {output}'
 
-"""   
 rule run_diffparc:
     input:
-        ' 
-
-"""
+        t1='bids/sub-01/anat/sub-01_T1w.nii.gz',
+        dwi='bids/sub-01/dwi',
+        dd='bids/dataset_description.json'
+    params:
+        container='/cifs/macdonald/shared/snakemake_containers/diffparc_20230502.sif'
+    output:
+        directory('diffparc')
+    container: 
+        'docker://kaitj/diffparc:dev'
+    threads: 8
+    shell: 
+        #'singularity exec -e {params.container} ../diffparc-surf/diffparc/run.py bids diffparc participant --use-template-parcellation'
+        'SNAKEMAKE_PROFILE="" ../diffparc-surf/diffparc/run.py bids diffparc participant --use-template-parcellation -c {threads}'
